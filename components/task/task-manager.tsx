@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { tasksApi } from "@/lib/api-client";
+import { sortTasks } from "@/lib/sort";
 import type { Task } from "@/lib/types";
-import type { CreateTaskInput } from "@/lib/validators";
+import type { CreateTaskInput, UpdateTaskInput } from "@/lib/validators";
 
 import { EmptyState } from "./empty-state";
 import { ErrorState } from "./error-state";
@@ -73,6 +74,16 @@ export function TaskManager() {
     setErrorMessage("");
   }, []);
 
+  const updateTask = useCallback(async (id: string, input: UpdateTaskInput) => {
+    const updated = await tasksApi.update(id, input);
+
+    // Replace the row with the authoritative record from the server and
+    // re-apply the server's ordering, in case the update changed it.
+    setTasks((current) =>
+      sortTasks(current.map((task) => (task.id === id ? updated : task))),
+    );
+  }, []);
+
   const openTaskCount = tasks.filter((task) => !task.completed).length;
 
   return (
@@ -101,7 +112,7 @@ export function TaskManager() {
         tasks.length === 0 ? (
           <EmptyState />
         ) : (
-          <TaskList tasks={tasks} />
+          <TaskList tasks={tasks} onUpdate={updateTask} />
         )
       ) : null}
     </div>
