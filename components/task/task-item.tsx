@@ -69,8 +69,8 @@ export function TaskItem({
             <h3
               className={
                 task.completed
-                  ? "text-sm font-semibold text-slate-500 line-through"
-                  : "text-sm font-semibold text-slate-900"
+                  ? "text-sm font-semibold break-words text-slate-500 line-through"
+                  : "text-sm font-semibold break-words text-slate-900"
               }
             >
               {task.title}
