@@ -25,12 +25,17 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # Local env files
+# .env.example is the committed template and must stay trackable.
 .env
-.env*.local
-.env.production
+.env.*
+!.env.example
 
 # Vercel
 .vercel
+
+# Agent skills installed by the Neon Vercel Marketplace integration
+/.agents/
+/skills-lock.json
 
 # TypeScript
 *.tsbuildinfo
