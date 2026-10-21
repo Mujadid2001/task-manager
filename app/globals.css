@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border-subtle: #e2e8f0;
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-success-100: #dcfce7;
+  --color-success-700: #15803d;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface-muted text-slate-900 antialiased;
+    font-family:
+      ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+  }
+
+  :focus-visible {
+    @apply outline-brand-600 outline-2 outline-offset-2;
+  }
+}
+
+@layer utilities {
+  .sr-only {
+    @apply absolute -m-px h-px w-px overflow-hidden p-0 whitespace-nowrap;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    border-width: 0;
+  }
+}
