@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { updateTask } from "@/lib/tasks";
+import { deleteTask, updateTask } from "@/lib/tasks";
 import {
   formatValidationIssues,
   taskIdSchema,
@@ -85,6 +85,60 @@ export async function PUT(request: Request, { params }: TaskRouteContext) {
         error: {
           code: "INTERNAL_ERROR",
           message: "Failed to update the task. Please try again.",
+        },
+      },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * DELETE /api/tasks/:id — delete a task.
+ */
+export async function DELETE(_request: Request, { params }: TaskRouteContext) {
+  const { id } = await params;
+
+  const parsedId = taskIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "The task id is not valid.",
+          details: formatValidationIssues(parsedId.error),
+        },
+      },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const deleted = await deleteTask(parsedId.data);
+
+    if (!deleted) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "NOT_FOUND",
+            message: "The task does not exist.",
+          },
+        },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(
+      { data: { id: parsedId.data, deleted: true } },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error(`DELETE /api/tasks/${id} failed:`, error);
+
+    return NextResponse.json(
+      {
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Failed to delete the task. Please try again.",
         },
       },
       { status: 500 },
