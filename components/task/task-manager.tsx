@@ -1,0 +1,94 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+
+import { tasksApi } from "@/lib/api-client";
+import type { Task } from "@/lib/types";
+
+import { EmptyState } from "./empty-state";
+import { ErrorState } from "./error-state";
+import { TaskList } from "./task-list";
+import { TaskListSkeleton } from "./task-list-skeleton";
+
+type LoadStatus = "loading" | "ready" | "error";
+
+function describeError(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "The tasks could not be loaded. Please try again.";
+}
+
+/**
+ * Root of the task manager.
+ *
+ * It owns the task list and the load state, and renders one of three views:
+ * the skeleton while loading, the list once the data is in, or an error with
+ * a retry action when the request failed.
+ */
+export function TaskManager() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [reloadToken, setReloadToken] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const loadedTasks = await tasksApi.list();
+        if (cancelled) return;
+        setTasks(loadedTasks);
+        setStatus("ready");
+      } catch (error) {
+        if (cancelled) return;
+        setErrorMessage(describeError(error));
+        setStatus("error");
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadToken]);
+
+  const retry = useCallback(() => {
+    setStatus("loading");
+    setErrorMessage("");
+    setReloadToken((token) => token + 1);
+  }, []);
+
+  const openTaskCount = tasks.filter((task) => !task.completed).length;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Your tasks
+        </h1>
+        {status === "ready" ? (
+          <p className="text-sm text-slate-500" aria-live="polite">
+            {openTaskCount} open
+            {tasks.length !== openTaskCount ? ` · ${tasks.length} total` : ""}
+          </p>
+        ) : null}
+      </div>
+
+      {status === "loading" ? <TaskListSkeleton /> : null}
+
+      {status === "error" ? (
+        <ErrorState message={errorMessage} onRetry={retry} />
+      ) : null}
+
+      {status === "ready" ? (
+        tasks.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <TaskList tasks={tasks} />
+        )
+      ) : null}
+    </div>
+  );
+}
