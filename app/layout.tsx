@@ -28,7 +28,27 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="min-h-dvh">{children}</body>
+      <body className="flex min-h-dvh flex-col">
+        <header className="border-border-subtle border-b bg-white">
+          <div className="mx-auto flex w-full max-w-3xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+            <span
+              aria-hidden="true"
+              className="bg-brand-600 flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white"
+            >
+              T
+            </span>
+            <div className="flex flex-col">
+              <span className="text-base leading-tight font-semibold tracking-tight text-slate-900">
+                Task Manager
+              </span>
+              <span className="text-xs leading-tight text-slate-500">
+                Keep track of what matters
+              </span>
+            </div>
+          </div>
+        </header>
+        {children}
+      </body>
     </html>
   );
 }
