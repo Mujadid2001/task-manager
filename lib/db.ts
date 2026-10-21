@@ -28,6 +28,12 @@ let client: NeonQueryFunction<false, false> | undefined;
  * DATABASE_URL environment variable is missing.
  */
 export function getSql(): NeonQueryFunction<false, false> {
+  // An injected client (see `setSql`) wins over the environment, which lets
+  // tests run without a connection string and without touching the network.
+  if (client) {
+    return client;
+  }
+
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
@@ -36,7 +42,7 @@ export function getSql(): NeonQueryFunction<false, false> {
     );
   }
 
-  client ??= neon(connectionString);
+  client = neon(connectionString);
   return client;
 }
 
