@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Full-stack task manager built with Next.js, TypeScript, Tailwind CSS and PostgreSQL",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
