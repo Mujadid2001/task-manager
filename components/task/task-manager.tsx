@@ -37,6 +37,10 @@ export function TaskManager() {
   const [taskPendingDeletion, setTaskPendingDeletion] = useState<Task | null>(
     null,
   );
+  const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +92,58 @@ export function TaskManager() {
     );
   }, []);
 
+  const setTaskPending = useCallback((id: string, pending: boolean) => {
+    setPendingTaskIds((current) => {
+      const next = new Set(current);
+      if (pending) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleComplete = useCallback(
+    async (task: Task, completed: boolean) => {
+      setMutationError(null);
+      setTaskPending(task.id, true);
+
+      // Update the row straight away so the checkbox responds to the click,
+      // then reconcile with the server's copy once the request resolves.
+      setTasks((current) =>
+        sortTasks(
+          current.map((item) =>
+            item.id === task.id ? { ...item, completed } : item,
+          ),
+        ),
+      );
+
+      try {
+        const updated = await tasksApi.update(task.id, { completed });
+        setTasks((current) =>
+          sortTasks(
+            current.map((item) => (item.id === task.id ? updated : item)),
+          ),
+        );
+      } catch (error) {
+        // Put the row back the way it was: showing a completed task that the
+        // server rejected would be worse than the click not applying.
+        setTasks((current) =>
+          sortTasks(current.map((item) => (item.id === task.id ? task : item))),
+        );
+        setMutationError(
+          error instanceof Error
+            ? error.message
+            : "The task could not be updated. Please try again.",
+        );
+      } finally {
+        setTaskPending(task.id, false);
+      }
+    },
+    [setTaskPending],
+  );
+
   const requestDelete = useCallback((task: Task) => {
     setTaskPendingDeletion(task);
   }, []);
@@ -120,6 +176,23 @@ export function TaskManager() {
 
       <TaskForm onCreate={createTask} />
 
+      {mutationError ? (
+        <div
+          role="alert"
+          className="border-danger-100 bg-danger-50 text-danger-700 flex items-start justify-between gap-3 rounded-lg border px-4 py-3 text-sm"
+        >
+          <p>{mutationError}</p>
+          <button
+            type="button"
+            onClick={() => setMutationError(null)}
+            className="hover:bg-danger-100 shrink-0 cursor-pointer rounded px-1 font-medium"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
+
       {status === "loading" ? <TaskListSkeleton /> : null}
 
       {status === "error" ? (
@@ -133,7 +206,11 @@ export function TaskManager() {
           <TaskList
             tasks={tasks}
             onUpdate={updateTask}
+            onToggleComplete={(task, completed) =>
+              void toggleComplete(task, completed)
+            }
             onRequestDelete={requestDelete}
+            pendingTaskIds={pendingTaskIds}
           />
         )
       ) : null}

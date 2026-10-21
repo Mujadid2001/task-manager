@@ -22,11 +22,15 @@ import { TaskEditForm } from "./task-edit-form";
 export function TaskItem({
   task,
   onUpdate,
+  onToggleComplete,
   onRequestDelete,
+  isToggling,
 }: {
   task: Task;
   onUpdate: (id: string, input: UpdateTaskInput) => Promise<void>;
+  onToggleComplete: (task: Task, completed: boolean) => void;
   onRequestDelete: (task: Task) => void;
+  isToggling: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -48,6 +52,19 @@ export function TaskItem({
         />
       ) : (
         <div className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            checked={task.completed}
+            onChange={(event) => onToggleComplete(task, event.target.checked)}
+            disabled={isToggling}
+            aria-label={
+              task.completed
+                ? `Mark "${task.title}" as not completed`
+                : `Mark "${task.title}" as completed`
+            }
+            className="accent-brand-600 mt-0.5 h-5 w-5 shrink-0 cursor-pointer disabled:cursor-wait"
+          />
+
           <div className="min-w-0 flex-1">
             <h3
               className={

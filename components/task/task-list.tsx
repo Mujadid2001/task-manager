@@ -12,11 +12,15 @@ import { TaskItem } from "./task-item";
 export function TaskList({
   tasks,
   onUpdate,
+  onToggleComplete,
   onRequestDelete,
+  pendingTaskIds,
 }: {
   tasks: Task[];
   onUpdate: (id: string, input: UpdateTaskInput) => Promise<void>;
+  onToggleComplete: (task: Task, completed: boolean) => void;
   onRequestDelete: (task: Task) => void;
+  pendingTaskIds: ReadonlySet<string>;
 }) {
   return (
     <ul className="space-y-3">
@@ -25,7 +29,9 @@ export function TaskList({
           key={task.id}
           task={task}
           onUpdate={onUpdate}
+          onToggleComplete={onToggleComplete}
           onRequestDelete={onRequestDelete}
+          isToggling={pendingTaskIds.has(task.id)}
         />
       ))}
     </ul>
