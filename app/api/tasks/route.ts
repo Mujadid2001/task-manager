@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 
+import {
+  apiSuccess,
+  readJsonBody,
+  toErrorResponse,
+  validationError,
+} from "@/lib/api";
 import { createTask, listTasks } from "@/lib/tasks";
-import { createTaskSchema, formatValidationIssues } from "@/lib/validators";
+import { createTaskSchema } from "@/lib/validators";
 
 // Tasks are live data, so this route must never be served from a cache.
 export const dynamic = "force-dynamic";
@@ -9,76 +15,37 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/tasks — list every task.
  */
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   try {
     const tasks = await listTasks();
 
-    return NextResponse.json({ data: tasks }, { status: 200 });
+    return apiSuccess(tasks);
   } catch (error) {
-    console.error("GET /api/tasks failed:", error);
-
-    return NextResponse.json(
-      {
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to load tasks. Please try again.",
-        },
-      },
-      { status: 500 },
-    );
+    return toErrorResponse(error, "GET /api/tasks");
   }
 }
 
 /**
  * POST /api/tasks — create a task.
  */
-export async function POST(request: Request) {
-  let body: unknown;
+export async function POST(request: Request): Promise<NextResponse> {
+  const body = await readJsonBody(request);
 
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      {
-        error: {
-          code: "INVALID_JSON",
-          message: "Request body must be valid JSON.",
-        },
-      },
-      { status: 400 },
-    );
+  if (!body.ok) {
+    return body.response;
   }
 
-  const parsed = createTaskSchema.safeParse(body);
+  const parsed = createTaskSchema.safeParse(body.value);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "The submitted task is not valid.",
-          details: formatValidationIssues(parsed.error),
-        },
-      },
-      { status: 400 },
-    );
+    return validationError(parsed.error);
   }
 
   try {
     const task = await createTask(parsed.data);
 
-    return NextResponse.json({ data: task }, { status: 201 });
+    return apiSuccess(task, 201);
   } catch (error) {
-    console.error("POST /api/tasks failed:", error);
-
-    return NextResponse.json(
-      {
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to create the task. Please try again.",
-        },
-      },
-      { status: 500 },
-    );
+    return toErrorResponse(error, "POST /api/tasks");
   }
 }
