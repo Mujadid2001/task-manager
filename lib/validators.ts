@@ -41,7 +41,7 @@ export const createTaskSchema = z.object({
  */
 export const updateTaskSchema = z
   .object({
-    title,
+    title: title.optional(),
     description,
     completed: z.boolean().optional(),
   })
