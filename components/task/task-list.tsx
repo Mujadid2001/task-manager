@@ -12,14 +12,21 @@ import { TaskItem } from "./task-item";
 export function TaskList({
   tasks,
   onUpdate,
+  onRequestDelete,
 }: {
   tasks: Task[];
   onUpdate: (id: string, input: UpdateTaskInput) => Promise<void>;
+  onRequestDelete: (task: Task) => void;
 }) {
   return (
     <ul className="space-y-3">
       {tasks.map((task) => (
-        <TaskItem key={task.id} task={task} onUpdate={onUpdate} />
+        <TaskItem
+          key={task.id}
+          task={task}
+          onUpdate={onUpdate}
+          onRequestDelete={onRequestDelete}
+        />
       ))}
     </ul>
   );
