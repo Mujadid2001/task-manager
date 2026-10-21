@@ -4,9 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { tasksApi } from "@/lib/api-client";
 import type { Task } from "@/lib/types";
+import type { CreateTaskInput } from "@/lib/validators";
 
 import { EmptyState } from "./empty-state";
 import { ErrorState } from "./error-state";
+import { TaskForm } from "./task-form";
 import { TaskList } from "./task-list";
 import { TaskListSkeleton } from "./task-list-skeleton";
 
@@ -60,6 +62,17 @@ export function TaskManager() {
     setReloadToken((token) => token + 1);
   }, []);
 
+  const createTask = useCallback(async (input: CreateTaskInput) => {
+    const task = await tasksApi.create(input);
+
+    // A new task is always open and the newest, so it belongs at the top of
+    // the open group. The server-side ordering is reproduced here instead of
+    // refetching the whole list.
+    setTasks((current) => [task, ...current]);
+    setStatus("ready");
+    setErrorMessage("");
+  }, []);
+
   const openTaskCount = tasks.filter((task) => !task.completed).length;
 
   return (
@@ -75,6 +88,8 @@ export function TaskManager() {
           </p>
         ) : null}
       </div>
+
+      <TaskForm onCreate={createTask} />
 
       {status === "loading" ? <TaskListSkeleton /> : null}
 
