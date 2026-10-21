@@ -7,6 +7,7 @@ import { sortTasks } from "@/lib/sort";
 import type { Task } from "@/lib/types";
 import type { CreateTaskInput, UpdateTaskInput } from "@/lib/validators";
 
+import { DeleteTaskDialog } from "./delete-task-dialog";
 import { EmptyState } from "./empty-state";
 import { ErrorState } from "./error-state";
 import { TaskForm } from "./task-form";
@@ -33,6 +34,9 @@ export function TaskManager() {
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
+  const [taskPendingDeletion, setTaskPendingDeletion] = useState<Task | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +88,20 @@ export function TaskManager() {
     );
   }, []);
 
+  const requestDelete = useCallback((task: Task) => {
+    setTaskPendingDeletion(task);
+  }, []);
+
+  const cancelDelete = useCallback(() => {
+    setTaskPendingDeletion(null);
+  }, []);
+
+  const confirmDelete = useCallback(async (task: Task) => {
+    await tasksApi.remove(task.id);
+    setTasks((current) => current.filter((item) => item.id !== task.id));
+    setTaskPendingDeletion(null);
+  }, []);
+
   const openTaskCount = tasks.filter((task) => !task.completed).length;
 
   return (
@@ -112,8 +130,20 @@ export function TaskManager() {
         tasks.length === 0 ? (
           <EmptyState />
         ) : (
-          <TaskList tasks={tasks} onUpdate={updateTask} />
+          <TaskList
+            tasks={tasks}
+            onUpdate={updateTask}
+            onRequestDelete={requestDelete}
+          />
         )
+      ) : null}
+
+      {taskPendingDeletion ? (
+        <DeleteTaskDialog
+          task={taskPendingDeletion}
+          onCancel={cancelDelete}
+          onConfirm={confirmDelete}
+        />
       ) : null}
     </div>
   );

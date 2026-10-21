@@ -22,9 +22,11 @@ import { TaskEditForm } from "./task-edit-form";
 export function TaskItem({
   task,
   onUpdate,
+  onRequestDelete,
 }: {
   task: Task;
   onUpdate: (id: string, input: UpdateTaskInput) => Promise<void>;
+  onRequestDelete: (task: Task) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -80,6 +82,15 @@ export function TaskItem({
               aria-label={`Edit ${task.title}`}
             >
               Edit
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onRequestDelete(task)}
+              aria-label={`Delete ${task.title}`}
+              className="text-danger-700 hover:bg-danger-50 hover:text-danger-700"
+            >
+              Delete
             </Button>
           </div>
         </div>
